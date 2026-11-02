@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEURAL HUB</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #090711;
+  color: #eeeaff;
+  font-family: Arial, sans-serif;
+}
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+aside {
+  width: 230px;
+  padding: 28px 20px;
+  background: #100d1c;
+  border-right: 1px solid #302044;
+}
+.logo {
+  color: #bd8cff;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  margin-bottom: 45px;
+}
+nav a {
+  display: block;
+  padding: 13px;
+  margin: 7px 0;
+  color: #aaa1bd;
+  text-decoration: none;
+  border-radius: 9px;
+}
+nav a:hover, nav a.active {
+  background: #28183e;
+  color: #d6aaff;
+}
+main {
+  flex: 1;
+  padding: 35px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.status { color: #69eac4; }
+h1 { font-size: 30px; }
+.subtitle { color: #9288a8; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+  gap: 18px;
+  margin-top: 35px;
+}
+.card {
+  background: #151020;
+  border: 1px solid #38234e;
+  border-radius: 15px;
+  padding: 22px;
+}
+.card h3 { color: #c69aff; }
+.chat {
+  margin-top: 25px;
+  padding: 24px;
+  background: #151020;
+  border: 1px solid #38234e;
+  border-radius: 15px;
+}
+textarea {
+  width: 100%;
+  height: 110px;
+  resize: vertical;
+  background: #0b0912;
+  color: white;
+  border: 1px solid #49305f;
+  border-radius: 10px;
+  padding: 14px;
+}
+select {
+  padding: 10px 12px;
+  color: white;
+  background: #0b0912;
+  border: 1px solid #49305f;
+  border-radius: 9px;
+}
+button {
+  margin-top: 12px;
+  padding: 12px 23px;
+  color: white;
+  background: #793bd0;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+button:hover { background: #9855ed; }
+#output {
+  color: #c9b5e8;
+  white-space: pre-wrap;
+}
+.chat-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.chat-controls button { margin-top: 0; }
+.chat-controls label { color: #aaa1bd; }
+.chat-controls button:disabled { opacity: .6; cursor: wait; }
+.chat-history {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+.chat-message {
+  padding: 14px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-message.user { background: #211831; }
+.chat-message.assistant { background: #0b0912; }
+.chat-message.error { color: #ff9a9a; }
+.card small[data-state="ready"] { color: #69eac4; }
+.card small[data-state="missing"] { color: #e8b769; }
+[hidden] { display: none !important; }
+@media(max-width:650px) {
+  .layout { flex-direction: column; }
+  aside { width: 100%; }
+  main { padding: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <div class="logo">NEURAL OS</div>
+  <nav>
+    <a class="active" href="#">⌂ Dashboard</a>
+    <a href="#">◈ AI Assistant</a>
+    <a href="#">⌘ Projects</a>
+    <a href="#">⚙ Settings</a>
+  </nav>
+</aside>
+
+<main>
+<header>
+  <div>
+    <h1>NEURAL HUB</h1>
+    <p class="subtitle">Your personal AI environment</p>
+  </div>
+  <div class="status">● SYSTEM ONLINE</div>
+</header>
+
+<section class="cards">
+  <div class="card">
+    <h3>Claude AI</h3>
+    <p>AI development assistant</p>
+    <small id="claude-status" data-state="missing">Checking configuration...</small>
+  </div>
+  <div class="card">
+    <h3>ChatGPT</h3>
+    <p>Intelligent assistant</p>
+    <small id="openai-status" data-state="missing">Checking configuration...</small>
+  </div>
+  <div class="card">
+    <h3>Local AI</h3>
+    <p>Local neural network</p>
+    <small>Not configured</small>
+  </div>
+</section>
+
+<section class="chat">
+  <h2>AI Command Center</h2>
+  <div class="chat-controls">
+    <label for="provider">Assistant</label>
+    <select id="provider">
+      <option value="openai">ChatGPT</option>
+      <option value="claude">Claude</option>
+    </select>
+    <button id="clear-chat" type="button">Clear chat</button>
+  </div>
+  <div id="chat-history" class="chat-history" aria-live="polite"></div>
+  <form id="chat-form">
+    <textarea id="message" required maxlength="8000"
+      placeholder="Enter your command..."></textarea>
+    <div class="chat-controls">
+      <button id="send-button" type="submit">Send command</button>
+      <span id="output" role="status">NEURAL HUB initialized.</span>
+    </div>
+  </form>
+</section>
+</main>
+</div>
+
+<script>
+const conversation = [];
+const form = document.getElementById("chat-form");
+const input = document.getElementById("message");
+const output = document.getElementById("output");
+const sendButton = document.getElementById("send-button");
+const clearButton = document.getElementById("clear-chat");
+const history = document.getElementById("chat-history");
+
+function addMessage(role, content, isError = false) {
+  const element = document.createElement("div");
+  element.className = `chat-message ${role}${isError ? " error" : ""}`;
+  element.textContent = content;
+  history.appendChild(element);
+}
+
+async function readApiResponse(response) {
+  const body = await response.text();
+  if (!body.trim()) {
+    throw new Error("The backend returned an empty response. Start it with `python3 scripts/server.py`.");
+  }
+  if (!response.headers.get("content-type")?.includes("application/json")) {
+    throw new Error("The backend returned a non-JSON response. Open the dashboard at http://127.0.0.1:8000.");
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error("The backend returned invalid JSON. Restart it with `python3 scripts/server.py`.");
+  }
+}
+
+async function updateProviderStatus() {
+  const labels = {
+    openai: document.getElementById("openai-status"),
+    claude: document.getElementById("claude-status")
+  };
+  try {
+    const response = await fetch("/api/status");
+    const status = await readApiResponse(response);
+    if (!response.ok) throw new Error(status.error || "Status check failed.");
+    for (const [provider, element] of Object.entries(labels)) {
+      const ready = status[provider] === true;
+      element.dataset.state = ready ? "ready" : "missing";
+      element.textContent = ready ? "API key configured" : "API key not configured";
+    }
+  } catch {
+    for (const element of Object.values(labels)) {
+      element.dataset.state = "missing";
+      element.textContent = "Backend offline — start scripts/server.py";
+    }
+  }
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = input.value.trim();
+  if (!message) return;
+
+  const provider = document.getElementById("provider").value;
+  const historyBeforeRequest = conversation.slice();
+  const requestMessages = [
+    ...conversation.slice(-18),
+    { role: "user", content: message }
+  ];
+  conversation.splice(0, conversation.length, ...requestMessages);
+  addMessage("user", message);
+  input.value = "";
+  output.textContent = "Waiting for response...";
+  sendButton.disabled = true;
+  clearButton.disabled = true;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, messages: requestMessages })
+    });
+    const result = await readApiResponse(response);
+    if (!response.ok) throw new Error(result.error || "The request failed.");
+    conversation.push({ role: "assistant", content: result.reply });
+    addMessage("assistant", result.reply);
+    output.textContent = `Response from ${provider === "claude" ? "Claude" : "ChatGPT"}.`;
+  } catch (error) {
+    conversation.splice(0, conversation.length, ...historyBeforeRequest);
+    const errorMessage = error instanceof TypeError
+      ? "Cannot connect to the backend. Start it with `python3 scripts/server.py` and open http://127.0.0.1:8000."
+      : error.message;
+    addMessage("assistant", errorMessage, true);
+    output.textContent = "Could not get a response.";
+  } finally {
+    sendButton.disabled = false;
+    clearButton.disabled = false;
+    input.focus();
+  }
+});
+
+clearButton.addEventListener("click", () => {
+  conversation.length = 0;
+  history.replaceChildren();
+  output.textContent = "Chat cleared.";
+});
+
+updateProviderStatus();
+</script>
+</body>
+</html>
